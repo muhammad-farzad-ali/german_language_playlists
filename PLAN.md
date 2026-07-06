@@ -1,179 +1,139 @@
-# German Language Playlists — Design & Implementation Plan
+# Plan: Client-Side Video Page Navigation
 
-## 1. Subject & Brief
+**Date:** 2026-07-07
+**Status:** In Progress
 
-**Subject:** Goethe A1/A2 exam prep video library — curated YouTube playlists for German language learners.
+---
 
-**Audience:** Self-directed German learners (beginners at A1 through intermediate A2), studying for Goethe-Zertifikat exams. They need clear organization by level, easy browsing, and quick access to lessons.
+## Problem
 
-**Page's single job:** Let users discover and watch lesson videos organized by proficiency level, with a clear sense of progression from A1 → A2.
+YouTube iframes cause CLS (Cumulative Layout Shift) and block page rendering. The current accordion-based UI loads iframes even when panels are collapsed, wasting bandwidth and slowing page load.
 
-## 2. File Structure
+---
 
-```
-german_language_playlists/
-├── data/
-│   ├── playlists.json        ← manifest (lists all playlist files)
-│   ├── A1 - German.json
-│   └── A2 - German.json
-├── index.html
-├── style.css
-└── app.js
-```
+## Solution
 
-## 3. Design Tokens (Tailwind Config)
+Replace accordion-based video display with **hash-based client-side routing**:
+- Landing page shows playlist titles only (no iframes)
+- Clicking a title navigates to a dedicated video page (`#video=VIDEO_ID`)
+- Video page contains: back link, iframe player, prev/next navigation within the same playlist
 
-### Color Palette
+---
 
-| Token | Name | Hex | Role |
-|---|---|---|---|
-| `--bg` | Nachthimmel | `#0F1923` | Night mode background |
-| `--bg-day` | Papier Hell | `#F5F0EB` | Day mode background |
-| `--surface` | Papier | `#E8E2DA` | Cards on night mode |
-| `--surface-day` | Weiß | `#FAFAF8` | Cards on day mode |
-| `--text` | Elfenbein | `#E8E2DA` | Night mode text |
-| `--text-day` | Tinte | `#1A1A1A` | Day mode text |
-| `--accent` | Korrektur | `#D4534A` | Interactive/active, level badges |
-| `--ink` | Kugelschreiber | `#2B5C8A` | Links, secondary interactive |
-| `--muted` | Bleistift | `#8B8178` | Secondary text, timestamps |
-| `--border` | Grau | `#2A3441` | Night mode borders |
-| `--border-day` | Grau Hell | `#D1CCC4` | Day mode borders |
+## Design Decisions
 
-### Typography (Google Fonts)
+1. **No thumbnails** — User preference, not needed for this project
+2. **No autoplay** — User presses play when ready
+3. **Prev/Next scoped to playlist** — Only cycles through videos in the same playlist (A1 or A2), not across all playlists
+4. **Client-side routing only** — No server-side changes, pure hash-based navigation
 
-- **Display:** `Libre Baskerville` — classic book serif, academic gravitas
-- **Body:** `Karla` — friendly geometric sans, approachable
-- **Utility:** `IBM Plex Mono` — structural labels, video counts
+---
 
-### Type Scale
+## Changes
 
-| Role | Size (desktop) | Size (mobile) | Weight |
-|---|---|---|---|
-| Hero | 3.5rem | 2rem | 700 |
-| Level Badge | 7rem | 4rem | 700 |
-| Section Title | 1.5rem | 1.25rem | 600 |
-| Body | 1rem | 1rem | 400 |
-| Caption | 0.875rem | 0.875rem | 400 |
-| Label | 0.75rem | 0.75rem | 500 |
+### 1. `app.js` — Core Logic
 
-## 4. Layout
+**Add hash router:**
+- `handleRoute()` — checks `window.location.hash`, routes to either `renderLandingPage()` or `renderVideoPage(videoId)`
+- `window.addEventListener('hashchange', handleRoute)` — handles back/forward navigation
 
-### Page Structure
+**Store playlist data globally:**
+- After loading all playlists, build `window.__PLAYLISTS__` array for lookup during routing
 
-```
-┌─────────────────────────────────────────────┐
-│  Header: Logo/Title              [🌙 / ☀️]  │
-├─────────────────────────────────────────────┤
-│  Hero: Large headline + subtitle            │
-│  "Deutsch lernen. Schritt für Schritt."     │
-├─────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────┐    │
-│  │ A1 Header  [badge] [count] [arrow]  │    │
-│  ├─────────────────────────────────────┤    │
-│  │ Video grid (when expanded)          │    │
-│  │ ┌─────┐ ┌─────┐ ┌─────┐            │    │
-│  │ │  1  │ │  2  │ │  3  │            │    │
-│  │ └─────┘ └─────┘ └─────┘            │    │
-│  │ ┌─────┐ ┌─────┐ ┌─────┐            │    │
-│  │ │  4  │ │  5  │ │  6  │            │    │
-│  │ └─────┘ └─────┘ └─────┘            │    │
-│  │ [Show all 59 videos]               │    │
-│  └─────────────────────────────────────┘    │
-│                                             │
-│  ┌─────────────────────────────────────┐    │
-│  │ A2 Header  [badge] [count] [arrow]  │    │
-│  └─────────────────────────────────────┘    │
-├─────────────────────────────────────────────┤
-│  Footer: minimal, credits                   │
-└─────────────────────────────────────────────┘
+**New `renderVideoPage(videoId)`:**
+- Finds video by ID across all playlists
+- Builds prev/next links within the same playlist
+- Renders: back link, iframe, prev/next buttons
+- Sets `iframe.src` only when page renders (lazy load)
+
+**New `renderLandingPage()`:**
+- Shows landing page, hides video page container
+
+**Modify `createVideoCard(video, playlistIndex)`:**
+- Remove iframe entirely
+- Replace with clickable link: `<a href="#video=${video.video_id}">`
+- Display: lesson number + title only
+
+**Modify `createPlaylistSection(playlist)`:**
+- Call `createVideoCard` without iframe (already handled above)
+
+### 2. `index.html` — Video Page Container
+
+Add hidden video page container:
+```html
+<div id="video-page" class="hidden">
+  <a href="#" class="back-link">← Zurück zur Playlist</a>
+  <div class="video-player-wrapper">
+    <iframe id="video-iframe" ...></iframe>
+  </div>
+  <div class="video-nav">
+    <button id="prev-btn">← Vorheriges</button>
+    <button id="next-btn">Nächstes →</button>
+  </div>
+</div>
 ```
 
-### Responsive Grid
+### 3. `style.css` — Video Page Styles
 
-| Breakpoint | Columns | Card Gap |
-|---|---|---|
-| `< 640px` | 1 | 1rem |
-| `640px–1024px` | 2 | 1.25rem |
-| `> 1024px` | 3 | 1.5rem |
+- `#video-page` container with `hidden` class toggle
+- `.back-link` styling
+- `.video-player-wrapper` (16:9 aspect ratio, iframe positioning)
+- `.video-nav` with flexbox prev/next buttons
 
-## 5. Night/Day Mode
+---
 
-- **Night (default):** Dark background, warm off-white text
-- **Day:** Warm paper background, dark text
-- Toggle button in header (sun/moon icon)
-- Prefers `prefers-color-scheme` on first load
-- Smooth 300ms transition on all color properties
-- `data-theme` attribute on `<html>` drives styling
+## Navigation Flow
 
-## 6. Eye Comfort
-
-- No pure `#000` or `#FFF` — use warm offsets
-- Body text: 16px base, 1.6 line-height
-- Cards: subtle `box-shadow` (not hard borders)
-- Generous padding (min 1.5rem between sections)
-- `loading="lazy"` on all YouTube iframes
-- Show first 6 videos per level, "Show all" reveals rest
-
-## 7. Accordion Behavior
-
-- Two level headers (A1, A2) — click to toggle
-- Only one level open at a time
-- Smooth height animation via CSS transitions
-- Chevron icon rotates on open/close
-- Keyboard accessible (Enter/Space to toggle)
-
-## 8. Video Card
-
-Each card:
-- Responsive YouTube iframe (16:9 aspect ratio via padding-bottom hack or aspect-ratio)
-- Cleaned lesson title (strip trailing timestamps)
-- Lesson number as small label
-- Subtle hover effect (slight scale/shadow)
-
-## 9. Title Cleaning
-
-Strip trailing date/timestamp patterns:
-- Input: `"1  Vowels, informal greetings 20260612 143656"`
-- Output: `"Vowels, informal greetings"`
-- Logic: remove leading number(s), remove trailing `\d{8}\s+\d{6}` pattern, trim
-
-## 10. Dynamic Data
-
-`data/playlists.json` manifest:
-```json
-["A1 - German.json", "A2 - German.json"]
+```
+Landing Page (index.html)
+  └── Click "Lektion 1" in A1 playlist → #video=Iyxc05UQHKU
+       └── Video Page
+            ├── ← Zurück zur Playlist (clears hash, shows landing)
+            ├── [iframe player]
+            └── ← Vorheriges | Nächstes →
+                 (cycles within same playlist only)
 ```
 
-`app.js` flow:
-1. Fetch manifest
-2. For each file, fetch playlist JSON
-3. Sort videos by `index` field
-4. Render levels and video grids
-5. Setup accordion + theme toggle
+---
 
-## 11. Signature Element
+## Tickets
 
-Level badges ("A1", "A2") as oversized `Libre Baskerville` display type:
-- Desktop: ~7rem, Mobile: ~4rem
-- Accent color (`#D4534A`)
-- Video count badge nested inside
-- Evokes oversized wood type / academic certificate grades
+- [ ] **feat: implement hash-based routing**
+  - Add `handleRoute()`, `renderVideoPage()`, `renderLandingPage()`
+  - Store playlists globally after load
 
-## 12. Accessibility
+- [ ] **feat: remove iframes from video cards**
+  - Replace iframe with `<a href="#video=ID">` link
+  - Keep lesson number and title display
 
-- Semantic HTML (`<header>`, `<main>`, `<section>`, `<article>`)
-- ARIA attributes on accordion triggers
-- Visible focus rings on interactive elements
-- `@media (prefers-reduced-motion: reduce)` disables transitions
-- Skip-to-content link
-- Alt text on theme toggle icon
+- [ ] **feat: add video page UI**
+  - Add video page container to index.html
+  - Add back link, iframe, prev/next buttons
 
-## 13. Implementation Order
+- [ ] **feat: add video page styles**
+  - Container layout, back link, player wrapper, nav buttons
 
-1. Write PLAN.md (this file)
-2. Create `data/playlists.json` manifest
-3. Create `index.html` — semantic structure, Tailwind CDN, Google Fonts
-4. Create `style.css` — custom properties, theme transitions, utility overrides
-5. Create `app.js` — data loading, rendering, accordion, theme toggle
-6. Test responsive behavior
-7. Git commits at each milestone
+- [ ] **feat: implement prev/next navigation**
+  - Prev/next within same playlist only
+  - Update hash on navigation
+
+- [ ] **test: verify routing and navigation**
+  - Hash changes work with back/forward button
+  - Prev/next correctly cycles within playlist
+  - Back link returns to landing page
+
+---
+
+## Performance Impact
+
+| Before | After |
+|--------|-------|
+| All iframes load on page init | Zero iframes on landing page |
+| CLS ~0.01 from iframe loading | CLS 0 on landing page |
+| ~500KB-1MB iframe data per video | No iframe data until click |
+
+---
+
+## Git Tag
+
+`v2.0.0` — Client-side video page navigation
