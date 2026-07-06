@@ -247,7 +247,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   margin-top: 1.25rem;
-  padding: 0.625rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.75rem;
   font-weight: 500;
@@ -287,6 +287,77 @@ body {
   .playlist-panel {
     transition: none;
   }
+}
+
+/* === Video Page === */
+#video-page {
+  min-height: calc(100vh - 200px);
+}
+#video-page.hidden {
+  display: none;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.875rem;
+  transition: opacity 0.2s;
+}
+.back-link:hover {
+  opacity: 0.7;
+}
+
+.video-player-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  background: #000;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.video-player-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.video-nav button {
+  padding: 0.875rem 1.5rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color var(--transition-speed),
+              border-color var(--transition-speed),
+              opacity 0.2s;
+}
+.video-nav button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+.video-nav button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.video-nav button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* === Footer === */
