@@ -14,3 +14,15 @@ node_modules/
 
 # Logs
 *.log
+
+# Test artifacts
+tests/
+.playwright-mcp/
+*.yml
+*.log
+
+# Plan/docs
+PLAN.md
+TEST_FAILURES.md
+TEST_REPORT.md
+UI_TEST_PLAN.md
