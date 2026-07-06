@@ -1,7 +1,6 @@
 (function () {
   'use strict';
 
-  const VISIBLE_COUNT = 6;
   const STORAGE_KEY = 'dl-theme';
 
   const container = document.getElementById('playlists-container');
@@ -180,37 +179,7 @@
     return wrapper;
   }
 
-  function createShowAllButton(grid, total, panelInner) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'show-all-btn';
-    btn.innerHTML = `Alle ${total} Videos anzeigen <span aria-hidden="true">&darr;</span>`;
 
-    const cards = grid.querySelectorAll('.video-card');
-    let revealed = false;
-
-    function revealAll() {
-      cards.forEach((card) => card.classList.remove('is-hidden'));
-      btn.classList.add('is-hidden');
-      revealed = true;
-    }
-
-    function hideExcess() {
-      cards.forEach((card, i) => {
-        if (i >= VISIBLE_COUNT) card.classList.add('is-hidden');
-      });
-    }
-
-    hideExcess();
-
-    btn.addEventListener('click', () => {
-      if (!revealed) {
-        revealAll();
-      }
-    });
-
-    return btn;
-  }
 
   function createPlaylistSection(playlist) {
     const section = document.createElement('section');
@@ -251,13 +220,7 @@
     const panelInner = section.querySelector('.playlist-panel-inner');
     const grid = createVideoGrid(sortedVideos, id);
 
-    if (totalVideos > VISIBLE_COUNT) {
-      const showAllBtn = createShowAllButton(grid, totalVideos, panelInner);
-      panelInner.appendChild(grid);
-      panelInner.appendChild(showAllBtn);
-    } else {
-      panelInner.appendChild(grid);
-    }
+    panelInner.appendChild(grid);
 
     header.addEventListener('click', () => {
       const isExpanded = header.getAttribute('aria-expanded') === 'true';
