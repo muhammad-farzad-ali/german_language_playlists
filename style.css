@@ -21,6 +21,7 @@
 :root {
   --accent: #D4534A;
   --ink: #2B5C8A;
+  --gold: #C9A227;
   --transition-speed: 300ms;
 }
 
@@ -84,6 +85,100 @@ body {
 .hero {
   border-bottom: 1px solid var(--border);
   transition: border-color var(--transition-speed);
+}
+
+.hero-eyebrow {
+  display: block;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeSlideUp 0.6s ease forwards;
+  animation-delay: 0.1s;
+}
+
+.hero-title {
+  font-family: 'Libre Baskerville', Georgia, serif;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 1.25rem;
+  opacity: 0;
+  transform: translateY(15px);
+  animation: fadeSlideUp 0.7s ease forwards;
+  animation-delay: 0.2s;
+}
+
+.hero-subtitle {
+  font-family: 'Karla', system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 32rem;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(15px);
+  animation: fadeSlideUp 0.7s ease forwards;
+  animation-delay: 0.35s;
+}
+
+.hero-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2.5rem 0 2rem;
+  opacity: 0;
+  animation: fadeIn 0.8s ease forwards;
+  animation-delay: 0.5s;
+}
+
+.hero-divider-line {
+  display: block;
+  width: 4rem;
+  height: 1px;
+  background: var(--border);
+}
+
+.hero-divider-diamond {
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+
+@keyframes fadeSlideUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero-eyebrow,
+  .hero-title,
+  .hero-subtitle,
+  .hero-divider {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
 }
 
 /* === Playlist Accordion === */
