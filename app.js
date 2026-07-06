@@ -205,7 +205,7 @@
       if (!isExpanded) {
         setTimeout(() => {
           section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+        }, 450);
       }
     });
 
