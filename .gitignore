@@ -1,6 +1,7 @@
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Editor
 .vscode/
@@ -19,6 +20,12 @@ node_modules/
 tests/
 .playwright-mcp/
 *.log
+performance-trace-*.json.gz
+
+# Agent/tools
+.agents/
+skills-lock.json
+opencode.jsonc
 
 # Plan/docs
 PLAN.md
