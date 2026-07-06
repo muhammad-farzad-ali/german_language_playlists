@@ -10,13 +10,16 @@
   const iconSun = document.getElementById('icon-sun');
 
   let openPanelId = null;
+  let allPlaylists = [];
+
+  window.__PLAYLISTS__ = null;
 
   // ── Theme ──────────────────────────────────────────
 
   function getPreferredTheme() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'night' || stored === 'day') return stored;
-    return window.matchMedia('(prefers-color-scheme: day)').matches ? 'day' : 'night';
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'day' : 'night';
   }
 
   function applyTheme(theme) {
@@ -69,6 +72,82 @@
     return res.json();
   }
 
+  // ── Routing ────────────────────────────────────────
+
+  function handleRoute() {
+    const hash = window.location.hash;
+    const match = hash.match(/^#video=(.+)$/);
+    if (match) {
+      renderVideoPage(match[1]);
+    } else {
+      renderLandingPage();
+    }
+  }
+
+  window.addEventListener('hashchange', handleRoute);
+
+  // ── Video Page ─────────────────────────────────────
+
+  function renderVideoPage(videoId) {
+    const videoPage = document.getElementById('video-page');
+    const mainContent = document.getElementById('main-content');
+    const videoIframe = document.getElementById('video-iframe');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const backLink = document.getElementById('back-link');
+    const videoTitleEl = document.getElementById('video-page-title');
+
+    let foundVideo = null;
+    let foundPlaylist = null;
+
+    for (const playlist of allPlaylists) {
+      const video = playlist.videos.find(v => v.video_id === videoId);
+      if (video) {
+        foundVideo = video;
+        foundPlaylist = playlist;
+        break;
+      }
+    }
+
+    if (!foundVideo) {
+      window.location.hash = '';
+      return;
+    }
+
+    const sortedVideos = [...foundPlaylist.videos].sort((a, b) => a.index - b.index);
+    const currentIndex = sortedVideos.findIndex(v => v.video_id === videoId);
+    const prevVideo = currentIndex > 0 ? sortedVideos[currentIndex - 1] : null;
+    const nextVideo = currentIndex < sortedVideos.length - 1 ? sortedVideos[currentIndex + 1] : null;
+
+    videoIframe.src = `https://www.youtube-nocookie.com/embed/${videoId}`;
+    videoTitleEl.textContent = `Lektion ${foundVideo.index}: ${cleanTitle(foundVideo.title)}`;
+
+    prevBtn.disabled = !prevVideo;
+    nextBtn.disabled = !nextVideo;
+
+    prevBtn.onclick = prevVideo ? () => { window.location.hash = `video=${prevVideo.video_id}`; } : null;
+    nextBtn.onclick = nextVideo ? () => { window.location.hash = `video=${nextVideo.video_id}`; } : null;
+
+    backLink.onclick = (e) => {
+      e.preventDefault();
+      window.location.hash = '';
+    };
+
+    mainContent.classList.add('hidden');
+    videoPage.classList.remove('hidden');
+    window.scrollTo(0, 0);
+  }
+
+  function renderLandingPage() {
+    const videoPage = document.getElementById('video-page');
+    const mainContent = document.getElementById('main-content');
+    const videoIframe = document.getElementById('video-iframe');
+
+    videoIframe.src = '';
+    videoPage.classList.add('hidden');
+    mainContent.classList.remove('hidden');
+  }
+
   // ── Rendering ──────────────────────────────────────
 
   function createVideoCard(video, playlistIndex) {
@@ -78,20 +157,10 @@
     const cleaned = cleanTitle(video.title);
 
     card.innerHTML = `
-      <div class="video-wrapper">
-        <iframe
-          src="https://www.youtube-nocookie.com/embed/${video.video_id}"
-          title="${cleaned}"
-          loading="lazy"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
-        ></iframe>
-      </div>
-      <div class="video-meta">
+      <a href="#video=${video.video_id}" class="video-link">
         <span class="video-number">Lektion ${video.index}</span>
         <h3 class="video-title">${cleaned}</h3>
-      </div>
+      </a>
     `;
     return card;
   }
@@ -250,11 +319,16 @@
 
       const playlists = await Promise.all(files.map(loadPlaylist));
 
+      allPlaylists = playlists;
+      window.__PLAYLISTS__ = playlists;
+
       playlists
         .sort((a, b) => a.playlist_title.localeCompare(b.playlist_title))
         .forEach((playlist) => {
           container.appendChild(createPlaylistSection(playlist));
         });
+
+      handleRoute();
 
     } catch (err) {
       console.error(err);
