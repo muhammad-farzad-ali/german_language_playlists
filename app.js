@@ -191,7 +191,7 @@
 
     section.innerHTML = `
       <button
-        class="playlist-header"
+        class="playlist-header my-5"
         id="${id}-header"
         aria-expanded="false"
         aria-controls="${id}-panel"
