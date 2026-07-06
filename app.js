@@ -151,16 +151,20 @@
   // ── Rendering ──────────────────────────────────────
 
   function createVideoCard(video, playlistIndex) {
-    const card = document.createElement('article');
+    const card = document.createElement('a');
     card.className = 'video-card';
+    card.href = `#video=${video.video_id}`;
 
     const cleaned = cleanTitle(video.title);
 
     card.innerHTML = `
-      <a href="#video=${video.video_id}" class="video-link">
-        <span class="video-number">Lektion ${video.index}</span>
-        <h3 class="video-title">${cleaned}</h3>
-      </a>
+      <div class="video-card-inner">
+        <div class="video-play-icon" aria-hidden="true"></div>
+        <div class="video-content">
+          <span class="video-number">Lektion ${video.index}</span>
+          <h3 class="video-title">${cleaned}</h3>
+        </div>
+      </div>
     `;
     return card;
   }
